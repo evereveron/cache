@@ -8,8 +8,6 @@ int* checkHit(char* assoc, int level){
    *1_ is cold
    *2_ is cap
    *3_ is conflict
-   *
-   *
    */
    int hit[4];
   
