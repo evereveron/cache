@@ -10,7 +10,7 @@ int* directHit(Block* L){
 }
 */
 
-int assocHit(Block* L, int tag, int index){
+int assocHit(Block** L, int tag, int index){
 	
 	/*
    *0 is hit
@@ -19,14 +19,14 @@ int assocHit(Block* L, int tag, int index){
    */
 	int hit;
 	
-	if(L[index].tag == tag){
+	if(L[index] -> tag == tag){
 		//hit
 		hit = 1;
 	}
 	else{
 		//miss
 		
-		if(L[index].valid == 0){
+		if(L[index] ->valid == 0){
 			//cold miss
 			hit = 1;
 		}
@@ -35,6 +35,11 @@ int assocHit(Block* L, int tag, int index){
 		}
 	}
 	return hit;
+}
+
+assocAdd(Block **L, int tag, int index){
+
+
 }
 
 /*
