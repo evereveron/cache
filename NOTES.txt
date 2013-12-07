@@ -1,3 +1,4 @@
 remember to immediately create Blocks after cache (array) creation.
   INITIALIZE EACH BLOCK -> VALID TO 0
   
+free memory
