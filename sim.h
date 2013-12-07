@@ -5,6 +5,7 @@
 typedef struct Block{
   unsigned int tag;
   unsigned int index;
+  unsigned int valid;
 
 }Block;
 
