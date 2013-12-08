@@ -1,6 +1,11 @@
+#ifndef DATASTRUCTS_H
+#define DATASTRUCTS_H
+
 #include<stdio.h>
 #include<stdlib.h>
 #include"sim.h"
+#include"globals.h"
+
 
 int test(Block* b){
 	printf("%d\n", b->tag);
@@ -37,16 +42,11 @@ adds to end of queue.
 if queue does not exist, creates new queue.
 takes in pointer to start of queue and Block to be added.
 returns nothing.
-*/
-Block* addToQueue(Block* start, Block* add){
+*//*
+Block* addToQueue(Block* add){
 	
-	//queue does not exist
-	if(equals(start, add) == 1){
-		return start;
-	}
-	
-	Block* temp = start;
-	
+	Block* temp = queue;
+	//should account for empty queue.
 	while(temp -> next != NULL){
 		temp = temp -> next;
 	}
@@ -55,7 +55,7 @@ Block* addToQueue(Block* start, Block* add){
 	temp -> next = NULL;
 	
 	
-	return start;
+	return;
 	
 }
 
@@ -74,9 +74,9 @@ Block* removeFromQueue(Block* start){
 }
 */
 
-printQueue(Block* start){
+printQueue(Block* queue){
 
-	Block* temp = start;
+	Block* temp = queue;
 	while(temp != NULL){
 		printf("%d\n", temp -> tag);
 		temp = temp -> next;
@@ -84,3 +84,5 @@ printQueue(Block* start){
 	
 	return;
 }
+
+#endif
