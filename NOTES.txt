@@ -8,3 +8,5 @@ TO DO: figure out how to read the file....
   fgetc??? (char)
 
 Should I have made an element struct and put that inside the Block struct?????????
+
+LRU strategy is linked list??
