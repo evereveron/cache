@@ -1,3 +1,5 @@
+#ifndef _DATASTRUCTSH_
+#define _DATASTRUCTSH_
 #include<stdio.h>
 #include<stdlib.h>
 #include"sim.h"
@@ -33,8 +35,12 @@ returns Block* bc of empty queue case
 Block* addToQueue(Block* queue, Block* add){
 	
 	//queue does not exist
-	if(equals(queue, add) == 1){
-		return queue;
+	//if(equals(queue, add) == 1){
+		
+		//printf("%d\n", queue->tag);
+		//printf("%d\n", add->tag);
+	if(queue == NULL){
+		return add;
 	}
 	
 	Block* temp = queue;
@@ -49,6 +55,51 @@ Block* addToQueue(Block* queue, Block* add){
 	
 	return queue;
 	
+}
+
+/*
+updates queue for LRU in case of hit
+takes in pointer to start of queue
+takes in Block pointer to be updated
+returns nothing
+*/
+updateQueue(Block* queue, Block* lastUsed){
+
+	Block* temp = queue;
+	
+	//account for head
+	if(equals(temp, lastUsed) == 1){
+		queue = queue->next;
+		while(temp->next != NULL){
+			temp = temp->next;
+		}
+		temp->next = lastUsed;
+		lastUsed->next = NULL;
+		return;
+	}
+	
+	while(temp->next != NULL){
+		if(equals(temp->next, lastUsed) == 1){
+			//found the block to update in queue
+			break;
+		}
+		temp = temp->next;
+	}
+	Block* update = temp->next;
+		if(temp->next->next == NULL){
+			//block is already in place
+			return;
+		}
+	temp->next = temp->next->next;
+	update->next = NULL;
+	
+	//traverse to end and add update
+	while(temp->next != NULL){
+		temp = temp->next;
+	}
+	temp->next = update;
+	
+
 }
 
 /*
@@ -67,7 +118,7 @@ Block* removeFromQueue(Block* queue){
 }
 
 
-printQueue(Block* start){
+printList(Block* start){
 
 	Block* temp = start;
 	while(temp != NULL){
@@ -77,3 +128,5 @@ printQueue(Block* start){
 	
 	return;
 }
+
+#endif
