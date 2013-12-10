@@ -9,6 +9,7 @@
 
 main(){
 	
+	Block* queue = (Block*)malloc(sizeof(Block));
 	
 	Block **L;
 		L = malloc(3* sizeof(Block*));
@@ -26,18 +27,18 @@ main(){
 		L2->valid = 1;
 	Block *L3 = (Block*)malloc(sizeof(Block));
 		L3->tag = 0x04;
-		L3->index = 3;
+		L3->index = 2;
 		L3->valid = 1;
 	Block *L4 = (Block*)malloc(sizeof(Block));
 		L4->tag = 0x05;
-		L4->index = 4;
+		L4->index = 3;
 		L4->valid = 1;
 	Block *L5 = (Block*)malloc(sizeof(Block));
 		L5->tag = 0x06;
-		L5->index = 5;
+		L5->index = 4;
 		L5->valid = 1;
 	
-	Block *queue = L0;
+	
 	L[0] = L0;
 	addToQueue(queue, L[0]);
 	L[1] = L1;
@@ -47,13 +48,11 @@ main(){
 	L[3] = L3;
 	addToQueue(queue, L[3]);
 	L[4] = L4;
-		printf("add in 5th element\n");
 	addToQueue(queue, L[4]);
 	L[5] = L5;
 	addToQueue(queue, L[5]);
 	
 	updateQueue(queue, L0);
-
 	/*
 	Block* temp = removeFromQueue(queue);
 	printf("%d\n", temp->tag);
