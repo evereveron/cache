@@ -39,7 +39,9 @@ Block* addToQueue(Block* queue, Block* add){
 		
 		//printf("%d\n", queue->tag);
 		//printf("%d\n", add->tag);
+
 	if(queue == NULL){
+		printf("first\n");
 		return add;
 	}
 	
