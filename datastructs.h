@@ -39,12 +39,14 @@ Block* addToQueue(Block* queue, Block* add){
 		
 		//printf("%d\n", queue->tag);
 		//printf("%d\n", add->tag);
-
+	/*
 	if(queue == NULL){
 		printf("first\n");
-		return add;
+		queue = add;
+		printf("%d\n", queue->tag);
+		return queue;
 	}
-	
+	*/
 	Block* temp = queue;
 	
 	while(temp -> next != NULL){
@@ -64,22 +66,37 @@ updates queue for LRU in case of hit
 takes in pointer to start of queue
 takes in Block pointer to be updated
 returns nothing
+
+MAY CAUSE PROBLEMS WITH FREEING
 */
-updateQueue(Block* queue, Block* lastUsed){
+Block* updateQueue(Block* queue, Block* lastUsed){
 
 	Block* temp = queue;
+	Block* head;
+	
+	printf("queue tag %d\n", queue->tag);
+	printf("queue index %d\n", queue->index);
+	printf("lastUsed tag %d\n", lastUsed->tag);
+	printf("lastUsed index %d\n", lastUsed->index);
 	
 	//account for head
-	if(equals(temp, lastUsed) == 1){
-		queue = queue->next;
+	//if(queue->tag == lastUsed->tag && queue->index == lastUsed->index){
+	if(equals(queue, lastUsed) == 1){
+		printList(queue);
+		printf("first\n");
+		head = queue->next;
 		while(temp->next != NULL){
+			printf("temp is tag %lx\n", temp->tag);
 			temp = temp->next;
 		}
+		printf("after while temp is tag %lx\n", temp->tag);
+		printf("after while lastUsed is tag %lx\n", lastUsed->tag);
 		temp->next = lastUsed;
 		lastUsed->next = NULL;
-		return;
+		printList(head);
+		return head;
 	}
-	
+	printf("1x\n");
 	while(temp->next != NULL){
 		if(equals(temp->next, lastUsed) == 1){
 			//found the block to update in queue
@@ -87,20 +104,24 @@ updateQueue(Block* queue, Block* lastUsed){
 		}
 		temp = temp->next;
 	}
+	
+	printf("2x\n");
 	Block* update = temp->next;
 		if(temp->next->next == NULL){
 			//block is already in place
-			return;
+			return queue;
 		}
 	temp->next = temp->next->next;
 	update->next = NULL;
 	
+	printf("3x\n");
 	//traverse to end and add update
 	while(temp->next != NULL){
 		temp = temp->next;
 	}
 	temp->next = update;
 	
+	return queue;
 
 }
 
@@ -121,10 +142,10 @@ Block* removeFromQueue(Block* queue){
 
 
 printList(Block* start){
-
+	printf("printlist \n");
 	Block* temp = start;
 	while(temp != NULL){
-		printf("%d\n", temp -> tag);
+		printf("%lx\n", temp -> tag);
 		temp = temp -> next;
 	}
 	
