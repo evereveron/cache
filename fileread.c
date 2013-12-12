@@ -43,11 +43,11 @@ main(){
 	 }
 	 printList(queue);
 		
-		Block *temp2;
+		Block *temp2 = (Block*)malloc(sizeof(Block));
 		temp2->tag = 0x3;
 		temp2->index = 0x1;
 		printf("1st\n");
-		Block* temp3;
+		Block* temp3 = (Block*)malloc(sizeof(Block));;
 		printf("2nd\n");
 		temp3->tag = 0x89;
 		printf("3rd\n");
