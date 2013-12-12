@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include"sim.h"
+#include"globals.h"
 
 /*
 checks equality.
@@ -69,7 +70,7 @@ returns nothing
 
 MAY CAUSE PROBLEMS WITH FREEING
 */
-Block* updateQueue(Block* queue, Block* lastUsed){
+Block* updateQueue(Block* lastUsed){
 
 	Block* temp = queue;
 	Block* head;
@@ -131,7 +132,7 @@ takes in pointer to start of queue.
 returns the new head of the queue.
 */
 
-Block* removeFromQueue(Block* queue){
+Block* removeFromQueue(){
 
 	Block* removed = queue;
 	queue = queue -> next;
@@ -145,7 +146,7 @@ printList(Block* start){
 	printf("printlist \n");
 	Block* temp = start;
 	while(temp != NULL){
-		printf("%lx\n", temp -> tag);
+		printf("%zx\n", temp -> tag);
 		temp = temp -> next;
 	}
 	
