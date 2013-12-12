@@ -6,7 +6,55 @@
 #include"datastructs.h"
 #include"globals.h"
 
+
+
+int logTwo(int num){
+	int ans = 0;
+	while(num != 1){
+		ans++;
+		num = num/2;	
+	}
+	return ans;
+}
+
 // Block* queue;
+Block* initBlock(Block* block, int numSet, int blockSize, size_t address){
+	
+	int i;
+	i = address % numSet;
+	printf("index: %d\n", i);
+	
+	int setbits = logTwo(numSet) * 4;
+	int offbits = logTwo(blockSize) * 4;
+	int tagbits = (address/numSet);
+	
+	size_t masktag;
+	masktag = 0xFFFFFFFFFFFF;
+	size_t maskset;
+	maskset = 0xFFFFFFFFFFFF;
+	
+	maskset = maskset >> tagbits;
+	printf("maskset1: %zx\n", maskset);
+	maskset >>= offbits;
+	printf("maskset2: %zx\n", maskset);
+	maskset <<= offbits;
+	printf("maskset: %zx\n", maskset);
+
+	masktag >>= setbits + offbits;
+	masktag <<= setbits + offbits;
+	printf("masktag: %zx\n", masktag);
+
+	size_t tag = address & masktag;
+	size_t index = address & maskset;
+	//index <<= tagbits;
+	index >>= offbits;
+	tag >>= setbits + offbits;
+	
+	block->tag = tag;
+	block->index = index;
+	block-> valid = 1;
+	return block;
+}
 
 main(){
 	
@@ -58,6 +106,11 @@ main(){
 		
 		printf("removed tag: %zx\n", removed->tag);
 		printList(queue);
+
+	Block* block = (Block*)malloc(sizeof(Block));
+	block = initBlock(block, 16, 8, 0x89);
+	printf("tag: %zx\n", block->tag);
+	printf("index: %zx\n", block->index);
 
 
 }
