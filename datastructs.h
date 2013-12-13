@@ -70,7 +70,7 @@ returns nothing
 
 MAY CAUSE PROBLEMS WITH FREEING
 */
-Block* updateQueue(Block* lastUsed){
+Block* updateQueue(Block* queue, Block* lastUsed){
 
 	Block* temp = queue;
 	Block* head;
@@ -87,11 +87,11 @@ Block* updateQueue(Block* lastUsed){
 		printf("first\n");
 		head = queue->next;
 		while(temp->next != NULL){
-			printf("temp is tag %lx\n", temp->tag);
+			printf("temp is tag %zx\n", temp->tag);
 			temp = temp->next;
 		}
-		printf("after while temp is tag %lx\n", temp->tag);
-		printf("after while lastUsed is tag %lx\n", lastUsed->tag);
+		printf("after while temp is tag %zx\n", temp->tag);
+		printf("after while lastUsed is tag %zx\n", lastUsed->tag);
 		temp->next = lastUsed;
 		lastUsed->next = NULL;
 		printList(head);
