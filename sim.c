@@ -1,109 +1,203 @@
-#include<stdlib.h>
 #include<stdio.h>
-#include<errno.h>
+#include<stdlib.h>
 #include"sim.h"
 
-/*
- *Global variables
- */
-Block* L1;
-Block* L2;
-Block* L3;
-int memNum;
-int L1hit;
-int L1miss;
-int L2hit;
-int L2miss;
-int L3hit;
-int L3miss;
-int L1cold;
-int L2cold;
-int L3cold;
-int L1con;
-int L2con;
-int L3con;
-int L1cap;
-int L2cap;
-int L3cap;
-int L1numElements;
-int L2numElements;
-int L3numElements;
+Block* initBlock(Block* block, int numSet, int blockSize, size_t address){
+	
+	int index;
+	address = address/blockSize;
+	index = address % numSet;
+	
+	size_t tag;
+	tag = address/numSet;
+	
+	block->tag = tag;
+	block->index = index;
+	block-> valid = 1;
+	return block;
+}
 
-main(int argc, char* argv[]){
+int numSet(int cacheSize, int blockSize, char* type){
+	
 
-  FILE *trace;
+	if(strcmp(type, "direct") == 0){ //direct
 
-  /*
+		return cacheSize/blockSize;
+	}
+	
+	else if(strcmp(type, "assoc") == 0){ //assoc
+
+		return 1;
+	}
+	
+	else{ //set assoc
+		//char* num = type[5];
+		//int n = strtol(num);
+		return (cacheSize/(3*blockSize));
+	}
+}
+
+main(int argc, char *argv[]){
+
+	Block** L1;
+	Block** L2;
+	Block** L3;
+	int L1numSet;
+	int L2numSet;
+	int L3numSet;
+	int L1hit=0;
+	int L1miss=0;
+	int L2hit=0;
+	int L2miss=0;
+	int L3hit=0;
+	int L3miss=0;
+	int L1cold=0;
+	int L2cold=0;
+	int L3cold=0;
+	int L1n;
+	int L2n;
+	int L3n;
+	int L1numElements;
+	int L2numElements;
+	int L3numElements;
+	size_t num;
+	
+	/*
    * Error check for incorrect number of arguments.
    */
-  if(argv[]){
-    fprintf(stderr, "Error: Improperly formatted input arguments.\n");
-    return;
-  }
   
-  /*
-   *Help.
-   */
-  if(argv[1] = h){
-    printf("\n");
-    return;
-  }
+	if(argc != 16 && argc != 2){
+		fprintf(stderr, "Error: Improperly formatted input arguments.\n");
+		return;
+	}
 
-  /*
-   *Declare some variables from arguments.
-   */
-  int L1size = argv[3]
-  char* L1assoc = argv[4];
-  int L2size = argv[7];
-  char* L2assoc = argv[8];
-  int L3size = argv[11];
-  char* L3assoc = argv[12];
-  int blockSize = argv[13];
-  char* replaceAlg = argv[14];
+	if(argc == 2){
+		if(strcmp(argv[1], "-h") == 0){
+			printf("Error, please run program using these input: cache-sim [-h] -l1size <L1 size> -l1assoc <L1 assoc> -l2size <L2 size> -l2assoc <L2 assoc> -l3size <L3 size> -l3assoc <L3 assoc> <block size> <replace alg> <trace file>\n");
+		}
+	}
 
-  /*
-   *Open file.
-   */
-  trace = fopen(argv[15], "r");
+	else{
+	/*
+	*Declare some variables from arguments.
+	*/
+	int L1size = atoi(argv[2]);
+	char* L1type = argv[4];
+	int L2size = atoi(argv[6]);
+	char* L2type = argv[8];
+	int L3size = atoi(argv[10]);
+	char* L3type = argv[12];
+	int blockSize = atoi(argv[13]);
+	char* replaceAlg = argv[14];
+	char* file = argv[15];
 
-  /*
-   *Check for nonexistent file.
-   */
-  if(trace == 0){
-    fprintf(stderr, "Error: Could not open file.\n");
-    return;
-  }
-  
-  /*
-   *While loop scans addresses from file.
-   */
-  while(fscanf(trace, "%lx", %num) != EOF){
-   
-   /*
-    *L1 direct mapped cache.
-    */
-   if(strcmp(L1assoc, "direct\n") = 0){
-      
+	L1 = malloc(L1size* sizeof(Block*));
+	L2 = malloc(L2size* sizeof(Block*));
+	L3 = malloc(L3size* sizeof(Block*));
+	
+	L1numSet = numSet(L1size, blockSize, L1type);
+	L2numSet = numSet(L2size, blockSize, L2type);
+	L3numSet = numSet(L3size, blockSize, L3type);
 
-    }
-    /*
-     *L1 fully associative cache.
-     */
-    else if(strcmp(L1assoc, "assoc\n") = 0){
-      int i = 0;
-      while(L1[i] != NULL){
-        i++;
-      }
-      L1[i] = (Block*)malloc(sizeof(Block));
+	FILE *fp;
+	fp = fopen(file, "r");
+	
+	/*
+	Error check for when the file does not exist.
+	*/
+	if(fp == 0){
+		fprintf(stderr, "Error. Could not open file.\n");
+		return 0;
+	}
 
-    }
-    /*
-     *L1 n-way associative cache.
-     */
-    else{
+	
+	//first element
+	fscanf(fp, "%zx", &num);
+	Block *newBlock = (Block*)malloc(sizeof(Block));
+	newBlock = initBlock(newBlock, L1numSet, blockSize, num);
+	
+	//add to L1
+	if(strcmp(L1type, "direct") == 0){
+	
+		L1[newBlock->index] = newBlock;
+		L1cold++;
+		//printf("%d\n", L1cold);
+	}
+	else if(strcmp(L1type, "assoc") == 0){
+		L1[newBlock->index] = newBlock;
+		L1cold++;
+	}
+	else{
+		L1[newBlock->index] = newBlock;
+		L1cold++;
+	
+	}
+	
+	//add to L2
+	if(strcmp(L2type, "direct") == 0){
+	
+		L2[newBlock->index] = newBlock;
+		L2cold++;
+		//printf("%d\n", L1cold);
+	}
+	else if(strcmp(L2type, "assoc") == 0){
+		L2[newBlock->index] = newBlock;
+		L2cold++;
+	}
+	else{
+		L2[newBlock->index] = newBlock;
+		L2cold++;
+	
+	}
+	
+	//add to L3
+	if(strcmp(L3type, "direct") == 0){
+	
+		L3[newBlock->index] = newBlock;
+		L3cold++;
+		//printf("%d\n", L1cold);
+	}
+	else if(strcmp(L1type, "assoc") == 0){
+		L3[newBlock->index] = newBlock;
+		L3cold++;
+	}
+	else{
+		L3[newBlock->index] = newBlock;
+		L3cold++;
+	
+	}
+	
+	
+	
+		while(fscanf(fp, "%zx", &num) != EOF){
+			Block *newBlock = (Block*)malloc(sizeof(Block));
+			newBlock = initBlock(newBlock, L1numSet, blockSize, num);
+			
+			
 
-    }
-  }
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	}
 
 
 
