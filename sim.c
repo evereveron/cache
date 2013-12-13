@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include"sim.h"
 
 /*
@@ -28,23 +29,10 @@ int equals(Block* a, Block* b){
 adds to end of queue.
 if queue does not exist, creates new queue.
 takes in pointer to start of queue and Block to be added.
-returns Block* bc of empty queue case
+returns Block
 */
 Block* addToQueue(Block* queue, Block* add){
 	
-	//queue does not exist
-	//if(equals(queue, add) == 1){
-		
-		//printf("%d\n", queue->tag);
-		//printf("%d\n", add->tag);
-	/*
-	if(queue == NULL){
-		printf("first\n");
-		queue = add;
-		printf("%d\n", queue->tag);
-		return queue;
-	}
-	*/
 	Block* temp = queue;
 	
 	while(temp -> next != NULL){
@@ -63,7 +51,7 @@ Block* addToQueue(Block* queue, Block* add){
 updates queue for LRU in case of hit
 takes in pointer to start of queue
 takes in Block pointer to be updated
-returns nothing
+returns Block*
 
 MAY CAUSE PROBLEMS WITH FREEING
 */
@@ -71,30 +59,21 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 
 	Block* temp = queue;
 	Block* head;
-	
-	printf("queue tag %d\n", queue->tag);
-	printf("queue index %d\n", queue->index);
-	printf("lastUsed tag %d\n", lastUsed->tag);
-	printf("lastUsed index %d\n", lastUsed->index);
-	
-	//account for head
-	//if(queue->tag == lastUsed->tag && queue->index == lastUsed->index){
+
 	if(equals(queue, lastUsed) == 1){
 		printList(queue);
-		printf("first\n");
+
 		head = queue->next;
 		while(temp->next != NULL){
-			printf("temp is tag %zx\n", temp->tag);
 			temp = temp->next;
 		}
-		printf("after while temp is tag %zx\n", temp->tag);
-		printf("after while lastUsed is tag %zx\n", lastUsed->tag);
+
 		temp->next = lastUsed;
 		lastUsed->next = NULL;
 		printList(head);
 		return head;
 	}
-	printf("1x\n");
+
 	while(temp->next != NULL){
 		if(equals(temp->next, lastUsed) == 1){
 			//found the block to update in queue
@@ -103,7 +82,6 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 		temp = temp->next;
 	}
 	
-	printf("2x\n");
 	Block* update = temp->next;
 		if(temp->next->next == NULL){
 			//block is already in place
@@ -112,7 +90,6 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 	temp->next = temp->next->next;
 	update->next = NULL;
 	
-	printf("3x\n");
 	//traverse to end and add update
 	while(temp->next != NULL){
 		temp = temp->next;
@@ -140,7 +117,7 @@ Block* removeFromQueue(){
 
 
 printList(Block* start){
-	printf("printlist \n");
+
 	Block* temp = start;
 	while(temp != NULL){
 		printf("%zx\n", temp -> tag);
@@ -154,7 +131,7 @@ printList(Block* start){
 int cap is 0 for LRU
 else FIFO
 */
-int directHit(Block** L, Block* newBlock, char* replace, Block* queue, int cold){
+int directHit(Block** L, Block* newBlock){
 
 	/*
 	0 is hit
@@ -166,22 +143,17 @@ int directHit(Block** L, Block* newBlock, char* replace, Block* queue, int cold)
 	
 	if(L[newBlock->index] -> tag == newBlock->tag){
 		//hit
-		hit = 1;
-		if(strcmp(replace, "LRU")==0){
-			updateQueue(queue, newBlock);
-		}
+		hit = 0;
 	}
 	else{
 		//miss
-		if(L[newBlock->index]->valid == 0){
+		if(L[newBlock->index] == NULL){
 			//cold miss
 			hit = 1;
-			addToQueue(queue, newBlock);
-			cold++;
+
 		}
 		else{
 			hit = 2;
-			addToQueue(queue, newBlock);
 		}
 	}
 	return hit;
@@ -206,7 +178,7 @@ else
 also updates queues
 assoc hit do we use full address instead???
 */
-int assocHit(Block** L, Block* toAdd, int Lsize, Block* queue, int qType, int cold){
+int assocHit(Block** L, Block* toAdd, int Lsize, Block* queue, char* qType){
 	
 	/*
    *0 is hit
@@ -217,13 +189,12 @@ int assocHit(Block** L, Block* toAdd, int Lsize, Block* queue, int qType, int co
 	
 	int i;
 	for(i=0; i<Lsize; i++){
-		//miss
 		
 		if(L[i]->valid == 1){
 			//something in Block
-			if(equals(L[i], toAdd) == 1){
+			if(equals(L[i], toAdd) == 1){ //hit
 				hit = 0;
-				if(qType == 1){
+				if(strcmp(qType, "LRU") == 0){
 					//LRU. must update list
 					updateQueue(queue, toAdd);
 					break;
@@ -231,19 +202,18 @@ int assocHit(Block** L, Block* toAdd, int Lsize, Block* queue, int qType, int co
 			}
 				
 		}
-		else if(L[i]->valid == 0){
+		else if(L[i] == NULL){
 			//cold miss
 			hit = 1;
 			cold++;
-			addToQueue(queue, toAdd);
+			//addToQueue(queue, toAdd);
 			break;
 		}
 	}
 
 	if(hit != 1 && hit != 0){
-		//capacity miss
 		hit = 2;
-		addToQueue(queue, toAdd);
+		//addToQueue(queue, toAdd);
 	}
 	return hit;
 }
@@ -266,7 +236,7 @@ assocAdd(Block **L, Block* toAdd, int missType, char* type, Block* queue, int Ls
 	
 	if(missType == 1){ //cold miss
 		for(i=0; i<Lsize; i++){
-			if(L[i]->valid == 0){
+			if(L[i] == NULL){
 				break;
 			}
 		}
@@ -274,34 +244,17 @@ assocAdd(Block **L, Block* toAdd, int missType, char* type, Block* queue, int Ls
 		L[i]->valid = 1;
 		queue = addToQueue(queue, L[i]);
 	}
-	else{ //capacity miss
-		if(strcmp(type, ""){ //LRU
-			//remove from queue
-			Block* removed = removeFromQueue(queue);
-			int i;
-			for(i=0; i<Lsize; i++){
-				if(L[i]->tag == removed->tag && L[i]->index == removed->index){
-					L[i] = toAdd;
-					queue = addToQueue(queue, L[i]);
-				}
-				else{
-					printf("error: not in cache, method fullass.h, assocAdd LRU add\n");
-				}
+	else{ 
+		//remove from queue
+		Block* removed = removeFromQueue(queue);
+		int i;
+		for(i=0; i<Lsize; i++){
+			if(L[i]->tag == removed->tag && L[i]->index == removed->index){
+				L[i] = toAdd;
+				queue = addToQueue(queue, L[i]);
 			}
-		
-		}
-		else{ //FIFO
-			//remove from queue
-			Block* removed = removeFromQueue(queue);
-			int i;
-			for(i=0; i<Lsize; i++){
-				if(L[i]->tag == removed->tag && L[i]->index == removed->index){
-					L[i] = toAdd;
-					queue = addToQueue(queue, L[i]);
-				}
-				else{
-					printf("error: not in cache, method fullass.h, assocAdd fifo add\n");
-				}
+			else{
+				printf("error: not in cache, method fullass.h, assocAdd LRU add\n");
 			}
 		}
 	}
@@ -312,7 +265,7 @@ assocAdd(Block **L, Block* toAdd, int missType, char* type, Block* queue, int Ls
 /*
 checks if there is a hit in set associative cache
 */
-int nassocHit(Block** L, Block* newBlock, int Lsize, int qType, Block* queue, int cold){
+int nassocHit(Block** L, Block* newBlock, int Lsize, char* qType){
 	/*
 	0_ hit
 	1_ cold miss
@@ -320,32 +273,33 @@ int nassocHit(Block** L, Block* newBlock, int Lsize, int qType, Block* queue, in
 	*/
 
 	int hit;
-	if(L[newBlock->index]->valid == 1){
-		Block* temp = L[newBlock->index];
+	if(L[newBlock->index] != NULL){
+		Block* temp =(Block*)malloc(sizeof(Block));;
+		temp = L[newBlock->index];
 		while(temp != NULL){
 			if(equals(temp, newBlock) == 1){
 				//hit
 				hit = 0;
-				if(qType == 0){
-					updateQueue(queue, newBlock);
+				if(strcmp(qType, "LRU") == 0){
+					L[newBlock->index] = updateQueue(L[newBlock->index], newBlock);
 				}
 				break;
 			}
 		}
 		//miss
 		hit = 2;
-		addToQueue(queue, newBlock);
+		L[newBlock->index] = addToQueue(L[newBlock->index], newBlock);
 	}
 	else{
 		//cold miss
 		hit = 1;
 		cold++;
-		addToQueue(queue, newBlock);
+		L[newBlock->index] = addToQueue(L[newBlock->index], newBlock);
 	}
 
 }
 
-nassocAdd(Block** L, Block* newBlock, int Lsize, char* qType, Block* queue, int n){
+nassocAdd(Block** L, Block* newBlock, int n, Block* toEvict){
 	
 	if(L[newBlock->index]->valid == 0){
 		//nothing in that index yet
@@ -355,18 +309,31 @@ nassocAdd(Block** L, Block* newBlock, int Lsize, char* qType, Block* queue, int 
 	else{
 		//already something in index
 		Block* temp = (Block*)malloc(sizeof(Block));
+		Block* foundEprev = (Block*)malloc(sizeof(Block));
+		temp = L[newBlock->index];
 		int count = 0;
+
 		while(temp != NULL && count <= n){
+			if(equals(temp->next, toEvict) == 1){
+				foundEprev = temp;
+			}
 			temp = temp->next;
+				
 			count++;
 		}
 		if(count<n){
 			//still room in list
 			temp->next = newBlock;
-			//no need to update queue;
+			//no need to update evict;
 		}
 		else{
 			//no room in list, must evict
+			foundEprev = foundEprev->next;
+			temp = foundEprev;
+			while(temp != NULL){
+				temp = temp->next;
+			}
+			temp->next = newBlock;
 		}
 		
 	
@@ -515,37 +482,40 @@ main(int argc, char *argv[]){
 		L1cold++;
 	
 	}
-	
+	Block *newBlock2 = (Block*)malloc(sizeof(Block));
+	newBlock2 = initBlock(newBlock2, L2numSet, blockSize, num);
 	//add to L2
 	if(strcmp(L2type, "direct") == 0){
 	
-		L2[newBlock->index] = newBlock;
+		L2[newBlock2->index] = newBlock2;
 		L2cold++;
 		//printf("%d\n", L1cold);
 	}
 	else if(strcmp(L2type, "assoc") == 0){
-		L2[newBlock->index] = newBlock;
+		L2[newBlock2->index] = newBlock2;
 		L2cold++;
 	}
 	else{
-		L2[newBlock->index] = newBlock;
+		L2[newBlock2->index] = newBlock2;
 		L2cold++;
 	
 	}
 	
+	Block *newBlock3 = (Block*)malloc(sizeof(Block));
+	newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
 	//add to L3
 	if(strcmp(L3type, "direct") == 0){
 	
-		L3[newBlock->index] = newBlock;
+		L3[newBlock3->index] = newBlock3;
 		L3cold++;
 		//printf("%d\n", L1cold);
 	}
 	else if(strcmp(L1type, "assoc") == 0){
-		L3[newBlock->index] = newBlock;
+		L3[newBlock3->index] = newBlock3;
 		L3cold++;
 	}
 	else{
-		L3[newBlock->index] = newBlock;
+		L3[newBlock3->index] = newBlock3;
 		L3cold++;
 	
 	}
@@ -564,74 +534,87 @@ main(int argc, char *argv[]){
 			
 			//search L1 for hit;
 			if(strcmp(L1type, "direct" == 0)){
-				L1hit = directHit(L1, newBlock, replaceAlg, queueL1, L1cold);
-				
+				L1hit = directHit(L1, newBlock, replaceAlg, queueL1);
 			}
 			else if(strcmp(L2type, "assoc" == 0)){
-				L1hit = assocHit(L1, newBlock, replaceAlg, queueL1, L1cold);
+				L1hit = assocHit(L1, newBlock, replaceAlg, queueL1);			
 			}
 			else{
-				L1hit = nassocHit(L1, newBlock, replaceAlg, queueL1, L1cold);
+				L1hit = nassocHit(L1, newBlock, replaceAlg, queueL1);
 			}
 			
 			if(L1hit != 0){ //miss
-				L1miss++
+				L1miss++;
+				if(L1hit == 1){ //cold miss
+					L1cold++;
+				}
+				
+				Block *newBlock2 = (Block*)malloc(sizeof(Block));
+				newBlock2 = initBlock(newBlock2, L2numSet, blockSize, num);
 				
 				//search L2 for hit
 				if(strcmp(L2type, "direct" == 0)){
-					L2hit = directHit(L2, newBlock, replaceAlg, queueL2, L2cold);
+					L2hit = directHit(L2, newBlock2, replaceAlg, queueL2);
 				
 				}
 				else if(strcmp(L2type, "assoc" == 0)){
-					L2hit = assocHit(L2, newBlock, replaceAlg, queueL2, L2cold);
+					L2hit = assocHit(L2, newBlock2, replaceAlg, queueL2);
 				}
+				
 				else{
-					L2hit = nassocHit(L2, newBlock, replaceAlg, queueL2, L2cold);
+					L2hit = nassocHit(L2, newBlock2, replaceAlg, queueL2);
 				}
 				
 				if(L2hit != 0){ //miss
 					L2miss++;
+					if(L2hit == 1)
+						L2cold++;
 					
+					Block *newBlock3 = (Block*)malloc(sizeof(Block));
+					newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
 					//search L3 for hit
 					if(strcmp(L3type, "direct" == 0)){
-					L3hit = directHit(L3, newBlock, replaceAlg, queueL3, L3cold);
+					L3hit = directHit(L3, newBlock3, replaceAlg, queueL3, L3cold);
 				
 					}
 					else if(strcmp(L3type, "assoc" == 0)){
-						L3hit = assocHit(L3, newBlock, replaceAlg, queueL3, L3cold);
+						L3hit = assocHit(L3, newBlock3, replaceAlg, queueL3, L3cold);
 					}
 					else{
-						L3hit = nassocHit(L3, newBlock, replaceAlg, queueL3, L3cold);
+						L3hit = nassocHit(L3, newBlock3, replaceAlg, queueL3, L3cold);
 					}
 					
 					if(L3hit != 0){ //miss
 						L3miss++;
-						//add to L2 and L1
-					
+						if(L3hit == 1)
+							L3cold++;
+						//add to L3, L2 and L1
+						
 					}
 					else{
 						L3hit++;
 						//add to L2
 						if(strcmp(L2type, "direct")) == 0){
-							directAdd(L2, newBlock);
+							directAdd(L2, newBlock2);
 						
 						}
 						else if(strcmp(L2type, "assoc"))  == 0){
-							assocAdd(L2, newBlock);
+							assocAdd(L2, newBlock2);
+							
 							
 						}
 						else{
-							nassocAdd(L2, newBlock);
+							nassocAdd(L2, newBlock2);
 						
 						}
 					
 						//add to L1
 						if(strcmp(L1type, "direct")) == 0){
 							directAdd(L1, newBlock);
-						
 						}
 						else if(strcmp(L2type, "assoc"))  == 0){
 							assocAdd(L1, newBlock);
+							L1queue = addToQueue(L1queue, newBlock);
 							
 						}
 						else{
@@ -684,4 +667,3 @@ main(int argc, char *argv[]){
 
         return;
 }
-
