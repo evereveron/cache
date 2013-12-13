@@ -3,7 +3,7 @@
 
 
 typedef struct Block{
-  unsigned int tag;
+	size_t tag;
   unsigned int index;
   
   //0 is invalid (empty). 
@@ -11,6 +11,7 @@ typedef struct Block{
   //Blocks initialized at 0.
   unsigned int valid;
   struct Block *next;
+  struct Block *qnext;
 
 }Block;
 
@@ -21,11 +22,18 @@ typedef struct Queue{
 }
 */
 
-int assocHit(Block** L, int tag, int index);
+int directHit(Block** L, Block* newBlock, char* replace, Block* queue, int cold);
+directAdd(Block **L, Block* toAdd);
+int assocHit(Block** L, Block* toAdd, int Lsize, Block* queue, int qType, int cold);
+assocAdd(Block **L, Block* toAdd, int missType, int cap, Block* queue, int Lsize);
+int nassocHit(Block** L, Block* newBlock, int Lsize, int qType, Block* queue, int cold);
+nassocAdd(Block** L, Block* newBlock, int Lsize, int qType, Block* queue);
+
 int equals(Block* a, Block* b);
 Block* addToQueue(Block* add, Block* queue);
 printList(Block* queue);
-Block* removeFromQueue(Block* queue);
+Block* removeFromQueue();
+Block* updateQueue(Block* queue, Block* lastUsed);
 
 
 #endif
