@@ -142,21 +142,24 @@ int directHit(Block** L, Block* newBlock){
 	
 	int hit;
 	
-	if(L[newBlock->index] -> tag == newBlock->tag){
-		//hit
-		hit = 0;
+	if(L[newBlock->index] == NULL){ //cold miss
+		hit = 1;
+	
 	}
+	
 	else{
-		//miss
-		if(L[newBlock->index] == NULL){
-			//cold miss
-			hit = 1;
-
+		if(L[newBlock->index] -> tag == newBlock->tag){
+			//hit
+			hit = 0;
 		}
 		else{
 			hit = 2;
 		}
 	}
+	
+	
+	
+	
 	return hit;
 }
 
@@ -191,18 +194,20 @@ int assocHit(Block** L, Block* toAdd, int Lsize){
 	int i;
 	for(i=0; i<Lsize; i++){
 		
-		if(L[i]->valid == 1){
+		if(L[i] == NULL){
+			//cold miss
+			hit = 1;
+			break;
+		}
+		
+		else if(L[i]->valid == 1){
 			//something in Block
 			if(equals(L[i], toAdd) == 1){ //hit
 				hit = 0;
 				break;	
 			}				
 		}
-		else if(L[i] == NULL){
-			//cold miss
-			hit = 1;
-			break;
-		}
+		
 	}
 
 	if(hit != 1 && hit != 0){
@@ -230,11 +235,12 @@ Block* assocAdd(Block **L, Block* toAdd, Block* queue, int missType, int Lsize){
 	if(missType == 1){ //cold miss
 		for(i=0; i<Lsize; i++){
 			if(L[i] == NULL){
+				L[i] = toAdd;
+				L[i]->valid = 1;
 				break;
 			}
 		}
-		L[i] = toAdd;
-		L[i]->valid = 1;
+		
 
 	}
 	else{ 
@@ -244,12 +250,10 @@ Block* assocAdd(Block **L, Block* toAdd, Block* queue, int missType, int Lsize){
 		queue = queue->next;
 		int i;
 		for(i=0; i<Lsize; i++){
-			if(equals(L[i], toEvict)){
+			if(equals(L[i], toEvict) == 1){
 				L[i] = toAdd;
 			}
-			else{
-				printf("error: not in cache, method fullass.h, assocAdd LRU add\n");
-			}
+			
 		}
 		free(toEvict);
 	}
@@ -365,6 +369,7 @@ int numSet(int cacheSize, int blockSize, char* type){
 
 main(int argc, char *argv[]){
 
+
 	int numMem =0;
 	Block** L1;
 	Block** L2;
@@ -372,27 +377,24 @@ main(int argc, char *argv[]){
 	int L1numSet;
 	int L2numSet;
 	int L3numSet;
-	int L1hit=0;
-	int L1miss=0;
-	int L2hit=0;
-	int L2miss=0;
-	int L3hit=0;
-	int L3miss=0;
-	int L1cold=0;
-	int L2cold=0;
-	int L3cold=0;
+	int L1hitnum = 0;
+	int L1miss = 0;
+	int L2hitnum = 0;
+	int L2miss = 0;
+	int L3hitnum = 0;
+	int L3miss = 0;
+	int L1cold = 0;
+	int L2cold = 0;
+	int L3cold = 0;
 	int L1n;
 	int L2n;
 	int L3n;
-	int L1numElements;
-	int L2numElements;
-	int L3numElements;
 	size_t num;
 	
 	/*
    * Error check for incorrect number of arguments.
    */
-  
+ 
 	if(argc != 16 && argc != 2){
 		fprintf(stderr, "Error: Improperly formatted input arguments.\n");
 		return;
@@ -494,6 +496,7 @@ main(int argc, char *argv[]){
 		L2cold++;
 	
 	}
+
 	
 	Block *newBlock3 = (Block*)malloc(sizeof(Block));
 	newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
@@ -525,8 +528,10 @@ main(int argc, char *argv[]){
 	
 	
 		while(fscanf(fp, "%zx", &num) != EOF){
-		
+			
 			numMem++;
+			printf("%d\n", numMem);
+			printf("%zx\n", num);
 			
 			Block *newBlock = (Block*)malloc(sizeof(Block));
 			newBlock = initBlock(newBlock, L1numSet, blockSize, num);
@@ -535,44 +540,58 @@ main(int argc, char *argv[]){
 			if(strcmp(L1type, "direct") == 0){
 				L1hit = directHit(L1, newBlock);
 			}
+				
 			else if(strcmp(L2type, "assoc") == 0){
+
 				L1hit = assocHit(L1, newBlock, L1size);	
 				if(strcmp(replaceAlg, "LRU") == 0 && L1hit == 0){
 					//LRU. update list
 					L1queue = updateQueue(L1queue, newBlock);
 				}	
 			}
+			
 			else{
+
 				L1hit = nassocHit(L1, newBlock, L1size, replaceAlg);
 			}
-			
+
 			if(L1hit != 0){ //miss
+
 				L1miss++;
 				if(L1hit == 1){ //cold miss
 					L1cold++;
 				}
+
 				
 				Block *newBlock2 = (Block*)malloc(sizeof(Block));
 				newBlock2 = initBlock(newBlock2, L2numSet, blockSize, num);
-				
+
 				//search L2 for hit
 				if(strcmp(L2type, "direct") == 0){
+
 					L2hit = directHit(L2, newBlock2);
-				
+
 				}
 				else if(strcmp(L2type, "assoc") == 0){
+
 					L2hit = assocHit(L2, newBlock2, L2size);
 					if(strcmp(replaceAlg, "LRU") == 0 && L2hit == 0){
+
 					//LRU. must update list
 						L2queue = updateQueue(L2queue, newBlock2);
 					}	
 				}
 				
 				else{
+
 					L2hit = nassocHit(L2, newBlock2, L2size, replaceAlg);
 				}
 				
+
+				
 				if(L2hit != 0){ //miss
+				
+				
 					L2miss++;
 					if(L2hit == 1)
 						L2cold++;
@@ -639,7 +658,7 @@ main(int argc, char *argv[]){
 						}
 					}
 					else{
-						L3hit++;
+						L3hitnum++;
 						//add to L2
 						if(strcmp(L2type, "direct") == 0){
 							directAdd(L2, newBlock2);						
@@ -668,7 +687,8 @@ main(int argc, char *argv[]){
 					}
 				}
 				else{ //hit L2
-					L2hit++;
+				
+					L2hitnum++;
 					
 					//add to L1;
 					if(strcmp(L1type, "direct") == 0){
@@ -686,17 +706,18 @@ main(int argc, char *argv[]){
 				}
 			}
 			else{ //hit L1
-				L1hit++;
+				L1hitnum++;
 			}
 
 		}
+
 		
 		printf("Memory accesses: %d\n", numMem);
-		printf("L1 Cache hits: %d\n", L1hit);
+		printf("L1 Cache hits: %d\n", L1hitnum);
 		printf("L1 Cache miss: %d\n", L1miss);
-		printf("L2 Cache hits: %d\n", L2hit);
+		printf("L2 Cache hits: %d\n", L2hitnum);
 		printf("L2 Cache miss: %d\n", L2miss);
-		printf("L3 Cache hits: %d\n", L3hit);
+		printf("L3 Cache hits: %d\n", L3hitnum);
 		printf("L3 Cache miss: %d\n", L3miss);
 		printf("L1 Cold misses: %d\n", L1cold);
 		printf("L2 Cold misses: %d\n", L2cold);
