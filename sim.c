@@ -62,7 +62,6 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 	Block* head;
 
 	if(equals(queue, lastUsed) == 1){
-		printList(queue);
 
 		head = queue->next;
 		while(temp->next != NULL){
@@ -71,7 +70,6 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 
 		temp->next = lastUsed;
 		lastUsed->next = NULL;
-		printList(head);
 		return head;
 	}
 
@@ -184,7 +182,7 @@ assoc hit do we use full address instead???
 */
 int assocHit(Block** L, Block* toAdd, int Lsize){
 	
-	/*
+	/* 
    *0 is hit
    *1 is cold
    *2 is cap
@@ -200,12 +198,10 @@ int assocHit(Block** L, Block* toAdd, int Lsize){
 			break;
 		}
 		
-		else if(L[i]->valid == 1){
-			//something in Block
-			if(equals(L[i], toAdd) == 1){ //hit
+		else if(equals(L[i], toAdd) == 1){ //hit
 				hit = 0;
 				break;	
-			}				
+					
 		}
 		
 	}
@@ -600,7 +596,7 @@ main(int argc, char *argv[]){
 					newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
 					//search L3 for hit
 					if(strcmp(L3type, "direct") == 0){
-					L3hit = directHit(L3, newBlock3);
+						L3hit = directHit(L3, newBlock3);
 				
 					}
 					else if(strcmp(L3type, "assoc") == 0){
@@ -640,7 +636,7 @@ main(int argc, char *argv[]){
 							L2queue = addToQueue(L2queue, newBlock2);							
 						}
 						else{
-							nassocAdd(L2, newBlock2, L3n);						
+							nassocAdd(L2, newBlock2, L2n);						
 						}
 					
 						//add to L1
