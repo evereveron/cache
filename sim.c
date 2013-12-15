@@ -30,7 +30,8 @@ returns Block
 */
 Block* addToQueue(Block* queue, Block* add){
 	
-	Block* temp = queue;
+	Block* temp = (Block*)malloc(sizeof(Block));
+	temp = queue;
 	
 	while(temp -> next != NULL){
 		temp = temp -> next;
@@ -53,12 +54,15 @@ returns Block*
 MAY CAUSE PROBLEMS WITH FREEING
 */
 Block* updateQueue(Block* queue, Block* lastUsed){
+	printf("update\n");
 
-	Block* temp = queue;
-	Block* head;
+	Block* temp = (Block*)malloc(sizeof(Block));
+	temp = queue;
+	Block* head = (Block*)malloc(sizeof(Block));
 
 	if(equals(queue, lastUsed) == 1){
-
+		
+		printf("1\n");
 		head = queue->next;
 		while(temp->next != NULL){
 			temp = temp->next;
@@ -70,22 +74,24 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 		return head;
 	}
 
-	while(temp->next != NULL){
+	printf("2\n");
+	while(temp->next->next != NULL){
 		if(equals(temp->next, lastUsed) == 1){
 			//found the block to update in queue
 			break;
 		}
 		temp = temp->next;
 	}
-	
-	Block* update = temp->next;
+	printf("3\n");
+	Block* update = (Block*)malloc(sizeof(Block));
+	update = temp->next;
 		if(temp->next->next == NULL){
 			//block is already in place
 			return queue;
 		}
 	temp->next = temp->next->next;
 	update->next = NULL;
-	
+	printf("4\n");
 	//traverse to end and add update
 	while(temp->next != NULL){
 		temp = temp->next;
@@ -587,6 +593,7 @@ main(int argc, char *argv[]){
 					
 					Block *newBlock3 = (Block*)malloc(sizeof(Block));
 					newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
+					
 					//search L3 for hit
 					if(strcmp(L3type, "direct") == 0){
 					L3hit = directHit(L3, newBlock3);
@@ -596,7 +603,7 @@ main(int argc, char *argv[]){
 						L3hit = assocHit(L3, newBlock3, L3sets);
 						if(strcmp(replaceAlg, "LRU") == 0 && L3hit == 0){
 							//LRU. update list
-							L3queue = updateQueue(L3queue, newBlock);
+							L3queue = updateQueue(L3queue, newBlock3);
 						}	
 					}
 					else{
