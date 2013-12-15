@@ -12,11 +12,7 @@ checks equality.
 int equals(Block* a, Block* b){
 	if(a -> tag == b-> tag){
 		if(a -> index == b-> index){
-			if(a-> valid == b ->valid){
 				return 1;
-			}
-			else
-				return 0;
 		}
 		else
 			return 0;
@@ -70,6 +66,7 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 
 		temp->next = lastUsed;
 		lastUsed->next = NULL;
+
 		return head;
 	}
 
@@ -182,7 +179,7 @@ assoc hit do we use full address instead???
 */
 int assocHit(Block** L, Block* toAdd, int Lsize){
 	
-	/* 
+	/*
    *0 is hit
    *1 is cold
    *2 is cap
@@ -200,8 +197,7 @@ int assocHit(Block** L, Block* toAdd, int Lsize){
 		
 		else if(equals(L[i], toAdd) == 1){ //hit
 				hit = 0;
-				break;	
-					
+				break;
 		}
 		
 	}
@@ -227,33 +223,25 @@ LRU and FIFO add actually same algorithm??
 */
 Block* assocAdd(Block **L, Block* toAdd, Block* queue, int missType, int Lsize){
 	int i;
-	
-	if(missType == 1){ //cold miss
-		for(i=0; i<Lsize; i++){
-			if(L[i] == NULL){
-				L[i] = toAdd;
-				L[i]->valid = 1;
-				break;
-			}
-		}
-		
 
-	}
-	else{ 
-		//remove from queue
-		Block* toEvict = (Block*)malloc(sizeof(Block));
-		toEvict = queue;
-		queue = queue->next;
-		int i;
-		for(i=0; i<Lsize; i++){
-			if(equals(L[i], toEvict) == 1){
-				L[i] = toAdd;
-			}
-			
-		}
-		free(toEvict);
-	}
+  for(i=0; i<Lsize; i++){
+    if(L[i] == NULL){
+      L[i] = toAdd;
+      return queue;
+    }
+  }
 	
+  Block* evict = (Block*)malloc(sizeof(Block));
+  evict = queue;
+  queue = queue->next;
+  for(i=0; i<Lsize; i++){
+    if(equals(evict, L[i])== 1){
+      L[i] = toAdd;
+      break;
+    }
+
+  }
+
 	return queue;
 
 }
@@ -295,7 +283,7 @@ int nassocHit(Block** L, Block* newBlock, int Lsize, char* qType){
 
 nassocAdd(Block** L, Block* newBlock, int n){
 	
-	if(L[newBlock->index]->valid == 0){
+	if(L[newBlock->index]==NULL){
 		//nothing in that index yet
 		L[newBlock->index] = newBlock;
 		//THIS IS ALSO START OF QUEUE;
@@ -415,6 +403,11 @@ main(int argc, char *argv[]){
 	int blockSize = atoi(argv[13]);
 	char* replaceAlg = argv[14];
 	
+  int L1sets = L1size/blockSize;
+  int L2sets = L2size/blockSize;
+  int L3sets = L3size/blockSize;
+  
+  
 	Block *L1queue = (Block*)malloc(sizeof(Block));
 	Block *L2queue = (Block*)malloc(sizeof(Block));
 	Block *L3queue = (Block*)malloc(sizeof(Block));
@@ -503,7 +496,7 @@ main(int argc, char *argv[]){
 		L3miss++;
 		L3cold++;
 	}
-	else if(strcmp(L1type, "assoc") == 0){
+	else if(strcmp(L3type, "assoc") == 0){
 		L3[0] = newBlock3;
 		L3queue = newBlock3;
 		L3miss++;
@@ -527,7 +520,7 @@ main(int argc, char *argv[]){
 			
 			numMem++;
 			printf("%d\n", numMem);
-			printf("%zx\n", num);
+		//	printf("%zx\n", num);
 			
 			Block *newBlock = (Block*)malloc(sizeof(Block));
 			newBlock = initBlock(newBlock, L1numSet, blockSize, num);
@@ -537,9 +530,9 @@ main(int argc, char *argv[]){
 				L1hit = directHit(L1, newBlock);
 			}
 				
-			else if(strcmp(L2type, "assoc") == 0){
+			else if(strcmp(L1type, "assoc") == 0){
 
-				L1hit = assocHit(L1, newBlock, L1size);	
+				L1hit = assocHit(L1, newBlock, L1sets);	
 				if(strcmp(replaceAlg, "LRU") == 0 && L1hit == 0){
 					//LRU. update list
 					L1queue = updateQueue(L1queue, newBlock);
@@ -570,7 +563,7 @@ main(int argc, char *argv[]){
 				}
 				else if(strcmp(L2type, "assoc") == 0){
 
-					L2hit = assocHit(L2, newBlock2, L2size);
+					L2hit = assocHit(L2, newBlock2, L2sets);
 					if(strcmp(replaceAlg, "LRU") == 0 && L2hit == 0){
 
 					//LRU. must update list
@@ -596,11 +589,11 @@ main(int argc, char *argv[]){
 					newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
 					//search L3 for hit
 					if(strcmp(L3type, "direct") == 0){
-						L3hit = directHit(L3, newBlock3);
+					L3hit = directHit(L3, newBlock3);
 				
 					}
 					else if(strcmp(L3type, "assoc") == 0){
-						L3hit = assocHit(L3, newBlock3, L3size);
+						L3hit = assocHit(L3, newBlock3, L3sets);
 						if(strcmp(replaceAlg, "LRU") == 0 && L3hit == 0){
 							//LRU. update list
 							L3queue = updateQueue(L3queue, newBlock);
@@ -620,7 +613,7 @@ main(int argc, char *argv[]){
 							directAdd(L3, newBlock3);						
 						}
 						else if(strcmp(L3type, "assoc") == 0){
-							L3queue = assocAdd(L3, newBlock3, L3queue, L3hit, L3size);
+							L3queue = assocAdd(L3, newBlock3, L3queue, L3hit, L3sets);
 							L3queue = addToQueue(L3queue, newBlock3);							
 						}
 						else{
@@ -632,7 +625,7 @@ main(int argc, char *argv[]){
 							directAdd(L2, newBlock2);						
 						}
 						else if(strcmp(L2type, "assoc") == 0){
-							L2queue = assocAdd(L2, newBlock2, L2queue, L2hit, L2size);
+							L2queue = assocAdd(L2, newBlock2, L2queue, L2hit, L2sets);
 							L2queue = addToQueue(L2queue, newBlock2);							
 						}
 						else{
@@ -643,8 +636,8 @@ main(int argc, char *argv[]){
 						if(strcmp(L1type, "direct") == 0){
 							directAdd(L1, newBlock);
 						}
-						else if(strcmp(L2type, "assoc") == 0){
-							L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1size);
+						else if(strcmp(L1type, "assoc") == 0){
+							L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1sets);
 							L1queue = addToQueue(L1queue, newBlock);
 							
 						}
@@ -660,7 +653,7 @@ main(int argc, char *argv[]){
 							directAdd(L2, newBlock2);						
 						}
 						else if(strcmp(L2type, "assoc")  == 0){
-							L2queue = assocAdd(L2, newBlock2, L2queue, L2hit, L2size);
+							L2queue = assocAdd(L2, newBlock2, L2queue, L2hit, L2sets);
 							L2queue = addToQueue(L2queue, newBlock2);							
 						}
 						else{
@@ -671,8 +664,8 @@ main(int argc, char *argv[]){
 						if(strcmp(L1type, "direct") == 0){
 							directAdd(L1, newBlock);
 						}
-						else if(strcmp(L2type, "assoc") == 0){
-							L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1size);
+						else if(strcmp(L1type, "assoc") == 0){
+							L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1sets);
 							L1queue = addToQueue(L1queue, newBlock);
 							
 						}
@@ -691,8 +684,8 @@ main(int argc, char *argv[]){
 						directAdd(L1, newBlock);
 						
 					}
-					else if(strcmp(L2type, "assoc")  == 0){
-						L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1size);
+					else if(strcmp(L1type, "assoc")  == 0){
+						L1queue = assocAdd(L1, newBlock, L1queue, L1hit, L1sets);
 						L1queue = addToQueue(L1queue, newBlock);
 					}
 					else{
