@@ -54,15 +54,13 @@ returns Block*
 MAY CAUSE PROBLEMS WITH FREEING
 */
 Block* updateQueue(Block* queue, Block* lastUsed){
-	printf("update\n");
 
 	Block* temp = (Block*)malloc(sizeof(Block));
 	temp = queue;
 	Block* head = (Block*)malloc(sizeof(Block));
 
 	if(equals(queue, lastUsed) == 1){
-		
-		printf("1\n");
+
 		head = queue->next;
 		while(temp->next != NULL){
 			temp = temp->next;
@@ -74,7 +72,6 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 		return head;
 	}
 
-	printf("2\n");
 	while(temp->next->next != NULL){
 		if(equals(temp->next, lastUsed) == 1){
 			//found the block to update in queue
@@ -82,7 +79,7 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 		}
 		temp = temp->next;
 	}
-	printf("3\n");
+
 	Block* update = (Block*)malloc(sizeof(Block));
 	update = temp->next;
 		if(temp->next->next == NULL){
@@ -91,7 +88,7 @@ Block* updateQueue(Block* queue, Block* lastUsed){
 		}
 	temp->next = temp->next->next;
 	update->next = NULL;
-	printf("4\n");
+
 	//traverse to end and add update
 	while(temp->next != NULL){
 		temp = temp->next;
@@ -118,7 +115,7 @@ Block* removeFromQueue(Block* queue){
 }
 
 
-printList(Block* start){
+void printList(Block* start){
 
 	Block* temp = start;
 	while(temp != NULL){
@@ -166,7 +163,7 @@ int directHit(Block** L, Block* newBlock){
 
 
 
-directAdd(Block **L, Block* toAdd){
+void directAdd(Block **L, Block* toAdd){
 	
 	L[toAdd->index] = toAdd;
 
@@ -255,67 +252,93 @@ Block* assocAdd(Block **L, Block* toAdd, Block* queue, int missType, int Lsize){
 /*
 checks if there is a hit in set associative cache
 */
-int nassocHit(Block** L, Block* newBlock, int Lsize, char* qType){
+int nassocHit(Block** L, Block* newBlock, int Lsize, char* qType, int n){
 	/*
 	0_ hit
 	1_ cold miss
 	2_ miss
 	*/
 
+	
 	int hit;
-	if(L[newBlock->index] != NULL){
-		Block* temp =(Block*)malloc(sizeof(Block));
-		temp = L[newBlock->index];
-		while(temp != NULL){
-			if(equals(temp, newBlock) == 1){
-				//hit
-				hit = 0;
-				if(strcmp(qType, "LRU") == 0){
-					L[newBlock->index] = updateQueue(L[newBlock->index], newBlock);
-				}
-				return hit;
-			}
-			temp = temp->next;
-		}
-		//miss
-		hit = 2;
+
+	
+	if(L[newBlock->index] == NULL){
+
+		return 1;
+	
 	}
 	else{
-		//cold miss
-		hit = 1;
+		
+		Block* temp = (Block*)malloc(sizeof(Block));
+		temp = L[newBlock->index];
+		int count = 0;
+		while(temp != NULL && count<=n){
+			//if(equals(temp, newBlock)==1){			
+			if(temp->tag == newBlock->tag){	
+				if(strcmp(qType, "LRU") == 0){
+					L[newBlock->index] = updateQueue(L[newBlock->index], newBlock);
+				
+				}
+				return 0;
+			}
+			temp = temp->next;
+			count++;
+		
+		}
+
+		if(count < n){
+		
+			return 1;
+		}
+		else
+		return 2;
 	}
 
 }
 
-nassocAdd(Block** L, Block* newBlock, int n){
+void nassocAdd(Block** L, Block* newBlock, int n){
 	
-	if(L[newBlock->index]==NULL){
-		//nothing in that index yet
+	if(L[newBlock->index] == NULL){
+		//empty, also start of queue
+
 		L[newBlock->index] = newBlock;
-		//THIS IS ALSO START OF QUEUE;
+		return;
+	
 	}
+	
 	else{
-		//already something in index
+
 		Block* temp = (Block*)malloc(sizeof(Block));
 		temp = L[newBlock->index];
-		int count = 0;
-
-		while(temp != NULL && count <= n){
-			temp = temp->next;			
+		int count = 1;
+		
+		while(temp->next != NULL){
+			temp = temp->next;
 			count++;
+		
 		}
-		if(count<n){
-			//still room in list
+
+		if(count == n){
+			//full. evict first one
+
+			L[newBlock->index] = L[newBlock->index]->next;
+			temp = L[newBlock->index];		
+			while(temp->next != NULL){
+				temp = temp->next;
+			}
 			temp->next = newBlock;
-			//no need to evict;
+			
 		}
 		else{
-			//no room in list, must evict
-			//block to evict is the head of the linked list
-			L[newBlock->index] = L[newBlock->index]->next;
-			L[newBlock->index] = addToQueue(L[newBlock->index], newBlock);
-		}
+
+			//not full
+			temp->next = newBlock;
 		
+		}
+	
+	
+	
 	
 	}
 	
@@ -337,7 +360,7 @@ Block* initBlock(Block* block, int numSet, int blockSize, size_t address){
 	return block;
 }
 
-int numSet(int cacheSize, int blockSize, char* type){
+int numSet(int cacheSize, int blockSize, char* type, int n){
 	
 
 	if(strcmp(type, "direct") == 0){ //direct
@@ -351,10 +374,17 @@ int numSet(int cacheSize, int blockSize, char* type){
 	}
 	
 	else{ //set assoc
-		//char* num = type[5];
-		//int n = strtol(num);
-		return (cacheSize/(3*blockSize));
+
+		return (cacheSize/(n*blockSize));
 	}
+}
+
+void recurseFree(Block* root){
+	if(root != NULL){
+		recurseFree(root->next);
+	}
+	free(root);
+
 }
 
 main(int argc, char *argv[]){
@@ -409,11 +439,15 @@ main(int argc, char *argv[]){
 	int blockSize = atoi(argv[13]);
 	char* replaceAlg = argv[14];
 	
-  int L1sets = L1size/blockSize;
-  int L2sets = L2size/blockSize;
-  int L3sets = L3size/blockSize;
-  
-  
+  	int L1sets = L1size/blockSize;
+  	int L2sets = L2size/blockSize;
+  	int L3sets = L3size/blockSize;
+  	
+  	//extract n
+	L1n = atoi(argv[4] + 6);
+  	L2n = atoi(argv[8] + 6);
+  	L3n = atoi(argv[12] + 6);
+  	
 	Block *L1queue = (Block*)malloc(sizeof(Block));
 	Block *L2queue = (Block*)malloc(sizeof(Block));
 	Block *L3queue = (Block*)malloc(sizeof(Block));
@@ -422,9 +456,9 @@ main(int argc, char *argv[]){
 	L2 = malloc(L2size* sizeof(Block*));
 	L3 = malloc(L3size* sizeof(Block*));
 	
-	L1numSet = numSet(L1size, blockSize, L1type);
-	L2numSet = numSet(L2size, blockSize, L2type);
-	L3numSet = numSet(L3size, blockSize, L3type);
+	L1numSet = numSet(L1size, blockSize, L1type, L1n);
+	L2numSet = numSet(L2size, blockSize, L2type, L2n);
+	L3numSet = numSet(L3size, blockSize, L3type, L3n);
 
 	FILE *fp;
 	fp = fopen(argv[15], "r");
@@ -461,8 +495,7 @@ main(int argc, char *argv[]){
 		L1cold++;
 	}
 	else{
-		//extract n
-		L1n = atoi(argv[4] + 6);
+
 		L1[newBlock->index] = newBlock;
 		L1miss++;
 		L1cold++;
@@ -484,8 +517,7 @@ main(int argc, char *argv[]){
 		L2cold++;
 	}
 	else{
-		//extract n
-		int L2n = atoi(argv[8] + 6);
+		
 		L2[newBlock2->index] = newBlock2;
 		L2miss++;
 		L2cold++;
@@ -510,7 +542,7 @@ main(int argc, char *argv[]){
 	}
 	else{
 		//extract n
-		int L3n = atoi(argv[12] + 6);
+		
 		L3[newBlock3->index] = newBlock3;
 		L3miss++;
 		L3cold++;
@@ -525,13 +557,14 @@ main(int argc, char *argv[]){
 		while(fscanf(fp, "%zx", &num) != EOF){
 			
 			numMem++;
-			printf("%d\n", numMem);
-		//	printf("%zx\n", num);
+
 			
 			Block *newBlock = (Block*)malloc(sizeof(Block));
 			newBlock = initBlock(newBlock, L1numSet, blockSize, num);
 			
 			//search L1 for hit;
+
+			
 			if(strcmp(L1type, "direct") == 0){
 				L1hit = directHit(L1, newBlock);
 			}
@@ -547,7 +580,7 @@ main(int argc, char *argv[]){
 			
 			else{
 
-				L1hit = nassocHit(L1, newBlock, L1size, replaceAlg);
+				L1hit = nassocHit(L1, newBlock, L1size, replaceAlg, L1n);
 			}
 
 			if(L1hit != 0){ //miss
@@ -560,7 +593,7 @@ main(int argc, char *argv[]){
 				
 				Block *newBlock2 = (Block*)malloc(sizeof(Block));
 				newBlock2 = initBlock(newBlock2, L2numSet, blockSize, num);
-
+				
 				//search L2 for hit
 				if(strcmp(L2type, "direct") == 0){
 
@@ -579,7 +612,7 @@ main(int argc, char *argv[]){
 				
 				else{
 
-					L2hit = nassocHit(L2, newBlock2, L2size, replaceAlg);
+					L2hit = nassocHit(L2, newBlock2, L2size, replaceAlg, L2n);
 				}
 				
 
@@ -593,7 +626,7 @@ main(int argc, char *argv[]){
 					
 					Block *newBlock3 = (Block*)malloc(sizeof(Block));
 					newBlock3 = initBlock(newBlock3, L3numSet, blockSize, num);
-					
+			
 					//search L3 for hit
 					if(strcmp(L3type, "direct") == 0){
 					L3hit = directHit(L3, newBlock3);
@@ -607,7 +640,7 @@ main(int argc, char *argv[]){
 						}	
 					}
 					else{
-						L3hit = nassocHit(L3, newBlock3, L3size, replaceAlg);
+						L3hit = nassocHit(L3, newBlock3, L3size, replaceAlg, L3n);
 					}
 					
 					if(L3hit != 0){ //miss
@@ -706,7 +739,7 @@ main(int argc, char *argv[]){
 			}
 
 		}
-
+	
 		
 		printf("Memory accesses: %d\n", numMem);
 		printf("L1 Cache hits: %d\n", L1hitnum);
@@ -721,10 +754,15 @@ main(int argc, char *argv[]){
 		printf("L1 Conflict misses: %d\n", 0);
 		printf("L1 Capacity misses: %d\n", 0);
 
+		//free queues
+		recurseFree(L1queue);
+		recurseFree(L2queue);
+		recurseFree(L3queue);
 
-
+		//close file
+		fclose(fp);
 	}
- 	//fclose(fp);
+ 	
 
         return;
 }
